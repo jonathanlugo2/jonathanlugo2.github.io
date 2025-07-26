@@ -1,2 +1,2 @@
-# TARJETA DE PRESENTACION
- Tarjeta de Presentacion con solo #HTML y #CSS y enlaces para redes sociales para nuestros proyectos.
+# PRESENTACION DE RESULTADOS FINANCIEROS
+ Solo es una muestra de como usar IA para crear rendir cuentas publicamente.
