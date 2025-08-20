@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Interactivo de Asesores Fiscales: TaxDown, TaxScouts y Declarando</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Se ha rediseñado la SPA para incorporar una navegación principal con pestañas que gestiona las secciones de alto nivel: 'Visión General', 'Análisis Detallado', 'Tabla Comparativa' y 'Conclusión'. Esta arquitectura de información no lineal permite al usuario saltar entre las secciones para una exploración más rápida y dirigida, mejorando la usabilidad. La sección 'Análisis Detallado' mantiene su propio sistema de pestañas internas para las empresas individuales (TaxDown, TaxScouts, Declarando), creando una estructura anidada que organiza de forma lógica la información. Este diseño se eligió para hacer el informe más amplio y consumible, facilitando la síntesis y la toma de decisiones al permitir una navegación clara y directa a la información que el usuario considere más relevante. -->
+    <!-- Visualization & Content Choices: 1. Métricas Clave (Usuarios, Financiación): Objetivo: Comparar. Método: Gráfico de barras (Chart.js) para una visión de alto nivel. Interacción: Cambio dinámico con la navegación principal. Justificación: Proporciona una comparación visual inmediata de la escala de cada empresa. 2. Sentimiento del Usuario: Objetivo: Informar. Método: Gráfico de Donut (Chart.js). Interacción: Cambio dinámico al seleccionar la empresa dentro de su pestaña. Justificación: Visualiza la proporción de opiniones positivas, negativas y neutras de forma clara. 3. Temas Recurrentes: Objetivo: Organizar/Informar. Método: Tarjetas HTML/CSS con listas de puntos clave. Interacción: La visualización de temas cambia al seleccionar una empresa. Justificación: Permite al usuario explorar los puntos específicos de feedback sin sobrecargar la interfaz. 4. Tabla Comparativa: Objetivo: Comparar. Método: Tabla HTML estilizada. Justificación: Presenta un resumen denso de fortalezas y debilidades de manera estructurada y fácil de escanear, fundamental para la toma de decisiones. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F4;
+            color: #44403C;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .main-tab-btn {
+            background-color: transparent;
+            color: #44403C;
+            border-bottom: 2px solid transparent;
+        }
+        .main-tab-btn.active {
+            font-weight: 600;
+            border-color: #3B82F6;
+            color: #3B82F6;
+        }
+        .sub-tab-btn {
+            background-color: white;
+            color: #374151;
+            border-color: #D1D5DB;
+        }
+        .sub-tab-btn.active {
+            background-color: #3B82F6;
+            color: white;
+            border-color: #3B82F6;
+        }
+        .theme-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .theme-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Análisis Comparativo de Asesores Fiscales en España</h1>
+            <p class="mt-2 text-lg text-gray-600">Una visión interactiva de TaxDown, TaxScouts y Declarando</p>
+        </header>
+
+        <nav class="flex justify-center mb-8">
+            <div id="main-tabs" class="flex flex-wrap justify-center gap-4 text-lg">
+                <button data-section="overview" class="main-tab-btn px-4 py-2 transition-colors duration-200 active">Visión General</button>
+                <button data-section="detailed-analysis" class="main-tab-btn px-4 py-2 transition-colors duration-200">Análisis Detallado</button>
+                <button data-section="comparison-table" class="main-tab-btn px-4 py-2 transition-colors duration-200">Tabla Comparativa</button>
+                <button data-section="conclusion" class="main-tab-btn px-4 py-2 transition-colors duration-200">Conclusión</button>
+            </div>
+        </nav>
+
+        <main>
+            <section id="overview" class="content-section active bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Visión General del Mercado</h2>
+                <p class="text-gray-600 mb-6 text-center">
+                    El mercado de asesoramiento fiscal online en España está en plena expansión, impulsado por la creciente digitalización. A continuación, se presenta una comparativa de las métricas clave de los tres principales actores, basadas en la información pública disponible. Estos datos ofrecen una primera impresión de la escala y el impacto de cada plataforma.
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="chart-container h-80 md:h-96 max-w-full mx-auto">
+                        <canvas id="fundingChart"></canvas>
+                    </div>
+                    <div class="chart-container h-80 md:h-96 max-w-full mx-auto">
+                        <canvas id="usersChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section id="detailed-analysis" class="content-section bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Análisis Detallado por Empresa</h2>
+                 <p class="text-gray-600 mb-6 text-center">
+                    Selecciona una empresa para explorar en profundidad su perfil de cliente, la percepción pública a través de un análisis de sentimiento y los temas más recurrentes en las conversaciones online. Esta sección te permitirá entender las fortalezas y debilidades específicas de cada servicio desde la perspectiva del usuario.
+                </p>
+                <div class="flex justify-center mb-6 border-b border-gray-200">
+                    <div id="sub-tabs" class="flex flex-wrap justify-center gap-2 sm:gap-4">
+                        <button data-company="taxdown" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200 active">TaxDown</button>
+                        <button data-company="taxscouts" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200">TaxScouts</button>
+                        <button data-company="declarando" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200">Declarando</button>
+                    </div>
+                </div>
+                <div id="company-content" class="transition-opacity duration-500 ease-in-out">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
+                        <div class="lg:col-span-2">
+                            <h3 id="company-name" class="text-2xl font-bold mb-2 text-blue-600"></h3>
+                            <p id="company-profile" class="text-gray-600 mb-4"></p>
+                            <div class="chart-container">
+                                <canvas id="sentimentChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="lg:col-span-3">
+                            <h4 class="text-xl font-semibold mb-4 text-center">Temas Recurrentes en Opiniones</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <h5 class="text-lg font-semibold mb-3 text-green-600 text-center">👍 Positivos</h5>
+                                    <div id="positive-themes" class="space-y-3"></div>
+                                </div>
+                                <div>
+                                    <h5 class="text-lg font-semibold mb-3 text-red-600 text-center">👎 Negativos</h5>
+                                    <div id="negative-themes" class="space-y-3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="comparison-table" class="content-section bg-white p-6 rounded-xl shadow-md overflow-x-auto">
+                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Tabla Comparativa: Fortalezas y Debilidades</h2>
+                <p class="text-gray-600 mb-6 text-center">
+                    Esta tabla resume las principales fortalezas y debilidades percibidas de cada empresa, basándose en el análisis de la reputación online y los datos públicos. Es una herramienta útil para comparar directamente los puntos clave que definen la propuesta de valor y los riesgos asociados a cada plataforma.
+                </p>
+                <table class="w-full min-w-max text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Empresa</th>
+                            <th scope="col" class="px-6 py-3">Fortalezas Percibidas</th>
+                            <th scope="col" class="px-6 py-3">Debilidades Percibidas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="bg-white border-b">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">TaxDown</th>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Gran visibilidad y base de usuarios (más de 1.6M).</li>
+                                    <li>Facilidad de uso para la mayoría de los casos.</li>
+                                    <li>Promesa de maximización de deducciones con IA.</li>
+                                    <li>Respaldo como "Colaborador Social de la AEAT".</li>
+                                </ul>
+                            </td>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Errores en casos fiscales complejos (inversiones, cripto).</li>
+                                    <li>Soporte al cliente lento e inconsistente.</li>
+                                    <li>Falta de transparencia en cálculos y asesores.</li>
+                                    <li>Sospechas sobre la autenticidad de algunas reseñas.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr class="bg-gray-50 border-b">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">TaxScouts</th>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Proceso rápido (48h) y 100% online.</li>
+                                    <li>Modelo de precio fijo y competitivo.</li>
+                                    <li>Asesoramiento personalizado (asesor asignado).</li>
+                                    <li>Experiencia probada en el Reino Unido.</li>
+                                </ul>
+                            </td>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Modelo de "responsabilidad difusa" con asesores externos.</li>
+                                    <li>Errores en casos complejos (cripto, plusvalías).</li>
+                                    <li>Soporte lento para urgencias.</li>
+                                    <li>Riesgo de multas para el usuario por negligencia.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                        <tr class="bg-white">
+                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Declarando</th>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Fuerte especialización en autónomos.</li>
+                                    <li>Ahorro fiscal significativo y demostrado.</li>
+                                    <li>Solución integral (facturas, gastos, impuestos).</li>
+                                    <li>Soporte experto 24/7 y alta satisfacción.</li>
+                                    <li>Respaldo corporativo tras adquisición por Visma.</li>
+                                </ul>
+                            </td>
+                            <td class="px-6 py-4">
+                                <ul class="list-disc list-inside space-y-1">
+                                    <li>Mención aislada de "estafa" en foros.</li>
+                                    <li>Menor visibilidad general que TaxDown.</li>
+                                    <li>Enfoque nicho, menos generalista para particulares.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="conclusion" class="content-section bg-white p-6 rounded-xl shadow-md">
+                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Conclusión y Valoración Final</h2>
+                <p class="text-gray-600 mb-4">
+                    En términos de "confianza", Declarando destaca en su nicho de autónomos gracias a su especialización, soporte experto y la validación de su adquisición por Visma. Genera una percepción de alta fiabilidad y satisfacción. Por otro lado, TaxDown y TaxScouts enfrentan desafíos significativos: TaxDown por la inconsistencia en casos complejos y la falta de transparencia, y TaxScouts por su modelo de "responsabilidad difusa" que transfiere el riesgo al usuario.
+                </p>
+                <p class="text-gray-600">
+                    En cuanto al "potencial de crecimiento", TaxDown y Declarando son los más prometedores. TaxDown tiene el potencial de escalar masivamente gracias a su gran base de usuarios y fuerte inversión, siempre que mejore la calidad en los servicios complejos. Declarando, con el respaldo de Visma, tiene un camino de crecimiento acelerado y sólido, consolidando su liderazgo en el creciente segmento de autónomos. La elección final para un usuario dependerá de su perfil: la simplicidad y bajo coste de TaxScouts para casos muy básicos, el alcance generalista de TaxDown, o la solución especializada y de alta confianza de Declarando para autónomos.
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const companyData = {
+                taxdown: {
+                    name: 'TaxDown',
+                    profile: 'Se posiciona como líder en volumen, atrayendo a particulares y perfiles complejos con la promesa de simplificación y maximización de deducciones. Su alcance es amplio, incluyendo inversores y autónomos. Sin embargo, su reputación se ve matizada por críticas significativas sobre la gestión de casos fiscales complejos, la calidad del soporte al cliente y la falta de transparencia en los cálculos, además de acusaciones sobre la autenticidad de algunas reseñas.',
+                    sentiment: { positive: 70, negative: 25, neutral: 5 },
+                    funding: 26.1,
+                    users: 1.6,
+                    themes: {
+                        positive: [
+                            'Facilidad de uso y simplicidad',
+                            'Ahorro fiscal y deducciones',
+                            'Asesoramiento experto disponible',
+                            'Seguridad y respaldo oficial (AEAT)'
+                        ],
+                        negative: [
+                            'Problemas con casos complejos (inversiones, cripto, etc.)',
+                            'Calidad del soporte inconsistente y difícil de contactar',
+                            'Falta de transparencia en cálculos y asesores',
+                            'Sospechas sobre autenticidad de reseñas'
+                        ]
+                    }
+                },
+                taxscouts: {
+                    name: 'TaxScouts',
+                    profile: 'Percibida como una solución rápida y de precio fijo, ideal para declaraciones sencillas de particulares y autónomos. Su principal atractivo es la eficiencia y un proceso 100% online. No obstante, el modelo de asesores externos y la consiguiente "responsabilidad difusa" generan una preocupación considerable entre los usuarios.',
+                    sentiment: { positive: 62, negative: 8, neutral: 30 },
+                    funding: 8.22,
+                    users: 0.1,
+                    themes: {
+                        positive: [
+                            'Rapidez y proceso online',
+                            'Precio cerrado y competitivo',
+                            'Atención al cliente personalizada',
+                            'Asesores experimentados'
+                        ],
+                        negative: [
+                            'Responsabilidad difusa (asesores externos)',
+                            'Errores en casos complejos',
+                            'Soporte lento para urgencias',
+                            'Casos de negligencia que llevan a multas'
+                        ]
+                    }
+                },
+                declarando: {
+                    name: 'Declarando',
+                    profile: 'Ha forjado una sólida reputación en su nicho de autónomos. Ofrece un enfoque integral, promesa de ahorro fiscal significativo y un soporte experto 24/7, generando un alto grado de confianza. La reciente adquisición por parte de Visma valida su modelo de negocio y le confiere un potencial de crecimiento acelerado.',
+                    sentiment: { positive: 90, negative: 5, neutral: 5 },
+                    funding: 3.08,
+                    users: 0.2,
+                    themes: {
+                        positive: [
+                            'Fuerte especialización en autónomos',
+                            'Ahorro fiscal significativo y demostrado',
+                            'Solución integral (facturas, gastos, impuestos)',
+                            'Soporte experto y accesible 24/7',
+                            'Fiabilidad y prevención de errores'
+                        ],
+                        negative: [
+                            'Acusación aislada pero grave de "estafa"',
+                            'Menor visibilidad general que TaxDown',
+                            'Enfoque nicho, menos generalista para particulares'
+                        ]
+                    }
+                }
+            };
+
+            let sentimentChartInstance;
+            let fundingChartInstance;
+            let usersChartInstance;
+            
+            const mainTabs = document.querySelectorAll('#main-tabs .main-tab-btn');
+            const subTabs = document.querySelectorAll('#sub-tabs .sub-tab-btn');
+            const sections = document.querySelectorAll('.content-section');
+            const companyNameEl = document.getElementById('company-name');
+            const companyProfileEl = document.getElementById('company-profile');
+            const positiveThemesEl = document.getElementById('positive-themes');
+            const negativeThemesEl = document.getElementById('negative-themes');
+            const companyContentEl = document.getElementById('company-content');
+
+            function createThemeCard(themeText) {
+                const card = document.createElement('div');
+                card.className = 'theme-card bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-default';
+                card.textContent = themeText;
+                return card;
+            }
+
+            function showMainSection(sectionId) {
+                sections.forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.getElementById(sectionId).classList.add('active');
+                mainTabs.forEach(tab => {
+                    tab.classList.remove('active');
+                    if (tab.dataset.section === sectionId) {
+                        tab.classList.add('active');
+                    }
+                });
+            }
+            
+            function updateSubContent(companyKey) {
+                const data = companyData[companyKey];
+
+                companyContentEl.style.opacity = 0;
+
+                setTimeout(() => {
+                    companyNameEl.textContent = data.name;
+                    companyProfileEl.textContent = data.profile;
+
+                    positiveThemesEl.innerHTML = '';
+                    data.themes.positive.forEach(theme => {
+                        positiveThemesEl.appendChild(createThemeCard(theme));
+                    });
+
+                    negativeThemesEl.innerHTML = '';
+                    data.themes.negative.forEach(theme => {
+                        negativeThemesEl.appendChild(createThemeCard(theme));
+                    });
+
+                    updateSentimentChart(data.sentiment);
+                    
+                    companyContentEl.style.opacity = 1;
+                }, 300);
+
+                subTabs.forEach(tab => {
+                    if (tab.dataset.company === companyKey) {
+                        tab.classList.remove('sub-tab-btn');
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                        tab.classList.add('sub-tab-btn');
+                    }
+                });
+            }
+
+            function updateSentimentChart(sentimentData) {
+                const ctx = document.getElementById('sentimentChart').getContext('2d');
+                const data = {
+                    labels: ['Positivo', 'Negativo', 'Neutro'],
+                    datasets: [{
+                        data: [sentimentData.positive, sentimentData.negative, sentimentData.neutral],
+                        backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                };
+
+                if (sentimentChartInstance) {
+                    sentimentChartInstance.destroy();
+                }
+
+                sentimentChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: data,
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Distribución de Sentimiento',
+                                font: {
+                                    size: 16
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + '%';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '60%'
+                    }
+                });
+            }
+
+            function createOverviewCharts() {
+                const fundingCtx = document.getElementById('fundingChart').getContext('2d');
+                const usersCtx = document.getElementById('usersChart').getContext('2d');
+                
+                const labels = Object.keys(companyData).map(key => companyData[key].name);
+                const fundingValues = Object.keys(companyData).map(key => companyData[key].funding);
+                const userValues = Object.keys(companyData).map(key => companyData[key].users);
+
+                fundingChartInstance = new Chart(fundingCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Financiación Total (Millones USD)',
+                            data: fundingValues,
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
+                            borderColor: ['#2563EB', '#059669', '#D97706'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Financiación Total Obtenida',
+                                font: { size: 16 }
+                            }
+                        }
+                    }
+                });
+
+                usersChartInstance = new Chart(usersCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Usuarios Reportados (Millones)',
+                            data: userValues,
+                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
+                            borderColor: ['#2563EB', '#059669', '#D97706'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                         indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Base de Usuarios (Millones)',
+                                font: { size: 16 }
+                            }
+                        }
+                    }
+                });
+            }
+
+            mainTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    showMainSection(tab.dataset.section);
+                });
+            });
+
+            subTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    updateSubContent(tab.dataset.company);
+                });
+            });
+
+            createOverviewCharts();
+            updateSubContent('taxdown');
+            showMainSection('overview');
+        });
+    </script>
+</body>
+</html>
