@@ -3,497 +3,425 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análisis Interactivo de Asesores Fiscales: TaxDown, TaxScouts y Declarando</title>
+    <title>Análisis Contable - MOVIL S.L. (En Embargo)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chosen Palette: Warm Neutrals -->
-    <!-- Application Structure Plan: Se ha rediseñado la SPA para incorporar una navegación principal con pestañas que gestiona las secciones de alto nivel: 'Visión General', 'Análisis Detallado', 'Tabla Comparativa' y 'Conclusión'. Esta arquitectura de información no lineal permite al usuario saltar entre las secciones para una exploración más rápida y dirigida, mejorando la usabilidad. La sección 'Análisis Detallado' mantiene su propio sistema de pestañas internas para las empresas individuales (TaxDown, TaxScouts, Declarando), creando una estructura anidada que organiza de forma lógica la información. Este diseño se eligió para hacer el informe más amplio y consumible, facilitando la síntesis y la toma de decisiones al permitir una navegación clara y directa a la información que el usuario considere más relevante. -->
-    <!-- Visualization & Content Choices: 1. Métricas Clave (Usuarios, Financiación): Objetivo: Comparar. Método: Gráfico de barras (Chart.js) para una visión de alto nivel. Interacción: Cambio dinámico con la navegación principal. Justificación: Proporciona una comparación visual inmediata de la escala de cada empresa. 2. Sentimiento del Usuario: Objetivo: Informar. Método: Gráfico de Donut (Chart.js). Interacción: Cambio dinámico al seleccionar la empresa dentro de su pestaña. Justificación: Visualiza la proporción de opiniones positivas, negativas y neutras de forma clara. 3. Temas Recurrentes: Objetivo: Organizar/Informar. Método: Tarjetas HTML/CSS con listas de puntos clave. Interacción: La visualización de temas cambia al seleccionar una empresa. Justificación: Permite al usuario explorar los puntos específicos de feedback sin sobrecargar la interfaz. 4. Tabla Comparativa: Objetivo: Comparar. Método: Tabla HTML estilizada. Justificación: Presenta un resumen denso de fortalezas y debilidades de manera estructurada y fácil de escanear, fundamental para la toma de decisiones. -->
+    
+    <!-- Chosen Palette: Slate & Crimson (Professional Accounting & Alert) - Deep slate for structure, crimson/red for alerts and negative equity, teal/blue for assets. -->
+    
+    <!-- Application Structure Plan: 
+    The SPA is structured as an interactive executive report divided into 4 logical sections to guide the user from the problem to the solution:
+    1. Resumen Ejecutivo (Context): Sets the stage using the provided data.
+    2. Diagnóstico Normativo (Theory/Law): Explains the Spanish PGC and ICAC rules regarding 'Empresa en Marcha' and missing assets.
+    3. Simulador de Ajustes (Interactive Core): Allows the user to toggle between different legal realities (court confiscation vs. shareholder appropriation) to see how the balance sheet must be corrected.
+    4. Conclusiones y Pasos (Actionable advice): Final recommendations.
+    This structure is chosen because accounting corrections require understanding the legal framework *before* seeing the numbers. The interactive simulator makes abstract accounting entries tangible. -->
+
+    <!-- Visualization & Content Choices: 
+    1. Hero/Summary: HTML/Tailwind text and metric cards -> Goal: Inform -> Justification: Clear immediate context.
+    2. Framework Flow: HTML/CSS flexbox cards -> Goal: Organize -> Justification: Breaks down dense ICAC/PGC regulations into readable blocks. (NO SVG used).
+    3. Interactive Balance Sheet Chart: Chart.js Bar Chart -> Goal: Compare/Change -> Justification: Visually demonstrates the massive impact of derecognizing €484k in assets under different scenarios.
+    4. Accounting Entries (Asientos): Dynamic HTML tables -> Goal: Inform/Action -> Justification: Shows the exact journal entries needed for the 2025 correction. -->
+
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F5F5F4;
-            color: #44403C;
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 800px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 400px; 
+            max-height: 500px; 
         }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 400px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 300px;
-            max-height: 350px;
-        }
-        @media (min-width: 768px) {
-            .chart-container {
-                height: 350px;
-            }
-        }
-        .main-tab-btn {
-            background-color: transparent;
-            color: #44403C;
-            border-bottom: 2px solid transparent;
-        }
-        .main-tab-btn.active {
-            font-weight: 600;
-            border-color: #3B82F6;
-            color: #3B82F6;
-        }
-        .sub-tab-btn {
-            background-color: white;
-            color: #374151;
-            border-color: #D1D5DB;
-        }
-        .sub-tab-btn.active {
-            background-color: #3B82F6;
-            color: white;
-            border-color: #3B82F6;
-        }
-        .theme-card {
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        }
-        .theme-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        }
-        .content-section {
-            display: none;
-        }
-        .content-section.active {
-            display: block;
-        }
+        @media (min-width: 768px) { .chart-container { height: 450px; } }
+        .nav-link.active { border-bottom: 2px solid #0f172a; font-weight: 600; color: #0f172a; }
+        .tab-btn.active { background-color: #0f172a; color: white; }
     </style>
 </head>
 <body class="antialiased">
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="text-center mb-10">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">Análisis Comparativo de Asesores Fiscales en España</h1>
-            <p class="mt-2 text-lg text-gray-600">Una visión interactiva de TaxDown, TaxScouts y Declarando</p>
-        </header>
 
-        <nav class="flex justify-center mb-8">
-            <div id="main-tabs" class="flex flex-wrap justify-center gap-4 text-lg">
-                <button data-section="overview" class="main-tab-btn px-4 py-2 transition-colors duration-200 active">Visión General</button>
-                <button data-section="detailed-analysis" class="main-tab-btn px-4 py-2 transition-colors duration-200">Análisis Detallado</button>
-                <button data-section="comparison-table" class="main-tab-btn px-4 py-2 transition-colors duration-200">Tabla Comparativa</button>
-                <button data-section="conclusion" class="main-tab-btn px-4 py-2 transition-colors duration-200">Conclusión</button>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2 text-slate-800">📊</span>
+                    <span class="font-bold text-xl text-slate-800">Auditoría y Cierre 2025</span>
+                </div>
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#contexto" class="nav-link active text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">1. Contexto</a>
+                    <a href="#normativa" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">2. Normativa PGC</a>
+                    <a href="#simulador" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">3. Corrección Balance</a>
+                    <a href="#conclusiones" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">4. Conclusiones</a>
+                </div>
             </div>
-        </nav>
+        </div>
+    </nav>
 
-        <main>
-            <section id="overview" class="content-section active bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Visión General del Mercado</h2>
-                <p class="text-gray-600 mb-6 text-center">
-                    El mercado de asesoramiento fiscal online en España está en plena expansión, impulsado por la creciente digitalización. A continuación, se presenta una comparativa de las métricas clave de los tres principales actores, basadas en la información pública disponible. Estos datos ofrecen una primera impresión de la escala y el impacto de cada plataforma.
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
+
+        <!-- 1. Contexto -->
+        <section id="contexto" class="scroll-mt-20">
+            <div class="bg-white rounded-xl shadow-sm p-8 border border-slate-200">
+                <h1 class="text-3xl font-bold text-slate-900 mb-4">Caso: Tecnologías de Seguridad Movil S.L.</h1>
+                <p class="text-lg text-slate-600 mb-8 border-l-4 border-slate-400 pl-4">
+                    Investigación contable sobre la regularización del Balance de Situación 2025 ante una situación de embargo, desaparición de activos circulantes y la consecuente ruptura del principio de empresa en marcha.
                 </p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="chart-container h-80 md:h-96 max-w-full mx-auto">
-                        <canvas id="fundingChart"></canvas>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-50 p-6 rounded-lg border border-slate-100">
+                        <div class="text-2xl mb-2">🏢</div>
+                        <h3 class="font-semibold text-slate-800">Situación Actual</h3>
+                        <p class="text-sm text-slate-600 mt-2">La empresa ha sido embargada. Las cuentas por cobrar (475.802€) y el efectivo han sido confiscados o movilizados irregularmente por el accionista.</p>
                     </div>
-                    <div class="chart-container h-80 md:h-96 max-w-full mx-auto">
-                        <canvas id="usersChart"></canvas>
+                    <div class="bg-rose-50 p-6 rounded-lg border border-rose-100">
+                        <div class="text-2xl mb-2">⚠️</div>
+                        <h3 class="font-semibold text-rose-800">Problema Contable</h3>
+                        <p class="text-sm text-rose-700 mt-2">El balance de 2025 muestra activos que ya no están bajo el control de la empresa. El principio de "Empresa en Marcha" está severamente comprometido.</p>
+                    </div>
+                    <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                        <div class="text-2xl mb-2">📈</div>
+                        <h3 class="font-semibold text-blue-800">Datos Base (Balance 2025 No Corregido)</h3>
+                        <ul class="text-sm text-blue-700 mt-2 space-y-1">
+                            <li>Activo Total: <strong>487.652,08 €</strong></li>
+                            <li>Pasivo Exigible: <strong>471.194,93 €</strong></li>
+                            <li>Patrimonio Neto Teórico: <strong>16.457,15 €</strong></li>
+                        </ul>
                     </div>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section id="detailed-analysis" class="content-section bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Análisis Detallado por Empresa</h2>
-                 <p class="text-gray-600 mb-6 text-center">
-                    Selecciona una empresa para explorar en profundidad su perfil de cliente, la percepción pública a través de un análisis de sentimiento y los temas más recurrentes en las conversaciones online. Esta sección te permitirá entender las fortalezas y debilidades específicas de cada servicio desde la perspectiva del usuario.
-                </p>
-                <div class="flex justify-center mb-6 border-b border-gray-200">
-                    <div id="sub-tabs" class="flex flex-wrap justify-center gap-2 sm:gap-4">
-                        <button data-company="taxdown" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200 active">TaxDown</button>
-                        <button data-company="taxscouts" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200">TaxScouts</button>
-                        <button data-company="declarando" class="sub-tab-btn px-4 py-2 font-semibold border rounded-lg shadow-sm transition-colors duration-200">Declarando</button>
+        <!-- 2. Normativa -->
+        <section id="normativa" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Marco Normativo Aplicable (España)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- ICAC -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">1. Principio de Empresa en Marcha</h3>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">ICAC 2013</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">
+                        Según el Marco Conceptual del <strong>PGC Pymes (RD 1515/2007)</strong>, se presumirá que la empresa continuará en funcionamiento. Sin embargo, dado el embargo total y pérdida de activos, este principio decae.
+                    </p>
+                    <div class="bg-slate-800 text-white p-4 rounded-lg text-sm">
+                        <strong>Resolución del ICAC de 18 de octubre de 2013:</strong><br>
+                        Cuando no resulta adecuada la aplicación del principio de empresa en marcha, los activos y pasivos deben valorarse según las reglas de liquidación. Los activos se valorarán al menor entre su valor contable y su valor estimado de liquidación (que en caso de pérdida o incautación es cero).
                     </div>
                 </div>
-                <div id="company-content" class="transition-opacity duration-500 ease-in-out">
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-                        <div class="lg:col-span-2">
-                            <h3 id="company-name" class="text-2xl font-bold mb-2 text-blue-600"></h3>
-                            <p id="company-profile" class="text-gray-600 mb-4"></p>
-                            <div class="chart-container">
-                                <canvas id="sentimentChart"></canvas>
+
+                <!-- Baja de Activos -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">2. Baja de Activos Financieros</h3>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">NRV 8ª PGC</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">
+                        La Norma de Registro y Valoración (NRV) de Instrumentos Financieros establece que la empresa dará de baja un activo financiero cuando expiren o se hayan cedido los derechos contractuales sobre los flujos de efectivo, o cuando se pierda el control sobre los mismos.
+                    </p>
+                    <ul class="text-sm text-slate-600 list-disc pl-5 space-y-2">
+                        <li>Si el dinero fue incautado por el juzgado para pagar deuda: <strong>Baja de Activo vs Baja de Pasivo</strong> (requiere auto judicial).</li>
+                        <li>Si el socio movilizó el dinero a sus cuentas personales: <strong>Baja de Activo vs Derecho de cobro al socio (Cta. 551)</strong>. Si es irrecuperable, se deteriora contra pérdidas (Cta. 678).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Simulador -->
+        <section id="simulador" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Corrección del Balance 2025</h2>
+            <p class="text-slate-600 mb-8">Seleccione el escenario real de la desaparición de los activos circulantes (484.743,09 €) para visualizar el ajuste contable necesario.</p>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Tabs -->
+                <div class="flex flex-wrap border-b border-slate-200 bg-slate-50">
+                    <button onclick="setScenario('original')" id="btn-original" class="tab-btn active flex-1 py-4 text-sm font-medium text-center transition-colors">Balance Borrador (Erróneo)</button>
+                    <button onclick="setScenario('juzgado')" id="btn-juzgado" class="tab-btn flex-1 py-4 text-sm font-medium text-center text-slate-600 hover:bg-slate-100 transition-colors">Escenario A: Embargo Judicial Aplicado</button>
+                    <button onclick="setScenario('socio')" id="btn-socio" class="tab-btn flex-1 py-4 text-sm font-medium text-center text-slate-600 hover:bg-slate-100 transition-colors">Escenario B: Apropiación por Socio</button>
+                </div>
+
+                <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left: Explanations & Entries -->
+                    <div class="space-y-6">
+                        <div id="scenario-desc" class="min-h-[120px]">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Estado Original (Sin Corregir)</h4>
+                            <p class="text-sm text-slate-600">Este es el balance extraído de la contabilidad actual. Muestra un Activo Corriente ficticio de 484.743,09 € (principalmente deudores comerciales) sobre los cuales la empresa ya no tiene control ni acceso. Este balance no refleja la imagen fiel.</p>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <h5 class="text-sm font-bold text-slate-700 mb-3 border-b border-slate-200 pb-2">Asiento Contable de Ajuste a realizar en 2025:</h5>
+                            <div id="journal-entries" class="text-sm font-mono text-slate-800 overflow-x-auto">
+                                <span class="text-slate-400 italic">Ningún ajuste aplicado aún.</span>
                             </div>
                         </div>
-                        <div class="lg:col-span-3">
-                            <h4 class="text-xl font-semibold mb-4 text-center">Temas Recurrentes en Opiniones</h4>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <h5 class="text-lg font-semibold mb-3 text-green-600 text-center">👍 Positivos</h5>
-                                    <div id="positive-themes" class="space-y-3"></div>
-                                </div>
-                                <div>
-                                    <h5 class="text-lg font-semibold mb-3 text-red-600 text-center">👎 Negativos</h5>
-                                    <div id="negative-themes" class="space-y-3"></div>
-                                </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white border border-slate-200 p-4 rounded-lg text-center">
+                                <span class="block text-xs text-slate-500 uppercase tracking-wide">Patrimonio Neto Resultante</span>
+                                <span id="metric-pn" class="block text-2xl font-bold text-slate-800 mt-1">16.457 €</span>
+                            </div>
+                            <div class="bg-white border border-slate-200 p-4 rounded-lg text-center">
+                                <span class="block text-xs text-slate-500 uppercase tracking-wide">Solvencia (Activo/Pasivo)</span>
+                                <span id="metric-solvencia" class="block text-2xl font-bold text-slate-800 mt-1">1.03</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
-            
-            <section id="comparison-table" class="content-section bg-white p-6 rounded-xl shadow-md overflow-x-auto">
-                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Tabla Comparativa: Fortalezas y Debilidades</h2>
-                <p class="text-gray-600 mb-6 text-center">
-                    Esta tabla resume las principales fortalezas y debilidades percibidas de cada empresa, basándose en el análisis de la reputación online y los datos públicos. Es una herramienta útil para comparar directamente los puntos clave que definen la propuesta de valor y los riesgos asociados a cada plataforma.
-                </p>
-                <table class="w-full min-w-max text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">Empresa</th>
-                            <th scope="col" class="px-6 py-3">Fortalezas Percibidas</th>
-                            <th scope="col" class="px-6 py-3">Debilidades Percibidas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="bg-white border-b">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">TaxDown</th>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Gran visibilidad y base de usuarios (más de 1.6M).</li>
-                                    <li>Facilidad de uso para la mayoría de los casos.</li>
-                                    <li>Promesa de maximización de deducciones con IA.</li>
-                                    <li>Respaldo como "Colaborador Social de la AEAT".</li>
-                                </ul>
-                            </td>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Errores en casos fiscales complejos (inversiones, cripto).</li>
-                                    <li>Soporte al cliente lento e inconsistente.</li>
-                                    <li>Falta de transparencia en cálculos y asesores.</li>
-                                    <li>Sospechas sobre la autenticidad de algunas reseñas.</li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr class="bg-gray-50 border-b">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">TaxScouts</th>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Proceso rápido (48h) y 100% online.</li>
-                                    <li>Modelo de precio fijo y competitivo.</li>
-                                    <li>Asesoramiento personalizado (asesor asignado).</li>
-                                    <li>Experiencia probada en el Reino Unido.</li>
-                                </ul>
-                            </td>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Modelo de "responsabilidad difusa" con asesores externos.</li>
-                                    <li>Errores en casos complejos (cripto, plusvalías).</li>
-                                    <li>Soporte lento para urgencias.</li>
-                                    <li>Riesgo de multas para el usuario por negligencia.</li>
-                                </ul>
-                            </td>
-                        </tr>
-                        <tr class="bg-white">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">Declarando</th>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Fuerte especialización en autónomos.</li>
-                                    <li>Ahorro fiscal significativo y demostrado.</li>
-                                    <li>Solución integral (facturas, gastos, impuestos).</li>
-                                    <li>Soporte experto 24/7 y alta satisfacción.</li>
-                                    <li>Respaldo corporativo tras adquisición por Visma.</li>
-                                </ul>
-                            </td>
-                            <td class="px-6 py-4">
-                                <ul class="list-disc list-inside space-y-1">
-                                    <li>Mención aislada de "estafa" en foros.</li>
-                                    <li>Menor visibilidad general que TaxDown.</li>
-                                    <li>Enfoque nicho, menos generalista para particulares.</li>
-                                </ul>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
 
-            <section id="conclusion" class="content-section bg-white p-6 rounded-xl shadow-md">
-                <h2 class="text-2xl font-semibold text-center mb-4 text-gray-700">Conclusión y Valoración Final</h2>
-                <p class="text-gray-600 mb-4">
-                    En términos de "confianza", Declarando destaca en su nicho de autónomos gracias a su especialización, soporte experto y la validación de su adquisición por Visma. Genera una percepción de alta fiabilidad y satisfacción. Por otro lado, TaxDown y TaxScouts enfrentan desafíos significativos: TaxDown por la inconsistencia en casos complejos y la falta de transparencia, y TaxScouts por su modelo de "responsabilidad difusa" que transfiere el riesgo al usuario.
-                </p>
-                <p class="text-gray-600">
-                    En cuanto al "potencial de crecimiento", TaxDown y Declarando son los más prometedores. TaxDown tiene el potencial de escalar masivamente gracias a su gran base de usuarios y fuerte inversión, siempre que mejore la calidad en los servicios complejos. Declarando, con el respaldo de Visma, tiene un camino de crecimiento acelerado y sólido, consolidando su liderazgo en el creciente segmento de autónomos. La elección final para un usuario dependerá de su perfil: la simplicidad y bajo coste de TaxScouts para casos muy básicos, el alcance generalista de TaxDown, o la solución especializada y de alta confianza de Declarando para autónomos.
-                </p>
-            </section>
-        </main>
-    </div>
+                    <!-- Right: Charts -->
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="chart-container">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Conclusiones -->
+        <section id="conclusiones" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Dictamen y Pasos a Seguir</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl border-l-4 border-slate-800 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">1. Formulación de Cuentas Anuales</h3>
+                    <p class="text-sm text-slate-600">Las cuentas de 2025 <strong>no pueden formularse bajo el principio de empresa en marcha</strong>. En la Memoria, apartado "Bases de presentación", se debe indicar explícitamente la aplicación de la Resolución del ICAC de 2013 por liquidación/embargo de la entidad, justificando los valores de realización de los activos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-rose-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">2. Riesgo Fiscal y Mercantil</h3>
+                    <p class="text-sm text-slate-600">Si el accionista dispuso de los fondos sin justificación (Escenario B), ante la AEAT esto puede considerarse un <strong>reparto de dividendos encubierto</strong> o una alteración patrimonial fraudulenta (alzamiento de bienes) si existen acreedores (como la deuda a corto plazo de 467k€). Se requiere trazabilidad documental urgente.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-blue-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">3. Reclasificación de Pasivos</h3>
+                    <p class="text-sm text-slate-600">Todos los pasivos a largo plazo (3.986,71 €) deben reclasificarse a corto plazo, ya que en una situación de embargo y cese de actividad, la exigibilidad de la deuda se acelera (vencimiento anticipado).</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">4. Documentación Soporte</h3>
+                    <p class="text-sm text-slate-600">Para registrar la baja de los activos, el contable necesita inexcusablemente: a) Providencia de apremio o diligencia de embargo judicial/administrativa, o b) Extractos bancarios que demuestren las transferencias del socio para registrarlas en la cuenta 551.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center mt-12">
+        <p class="text-sm">Generado para análisis técnico-contable. Basado en Plan General Contable Español (RD 1515/2007) y Resoluciones ICAC.</p>
+    </footer>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const companyData = {
-                taxdown: {
-                    name: 'TaxDown',
-                    profile: 'Se posiciona como líder en volumen, atrayendo a particulares y perfiles complejos con la promesa de simplificación y maximización de deducciones. Su alcance es amplio, incluyendo inversores y autónomos. Sin embargo, su reputación se ve matizada por críticas significativas sobre la gestión de casos fiscales complejos, la calidad del soporte al cliente y la falta de transparencia en los cálculos, además de acusaciones sobre la autenticidad de algunas reseñas.',
-                    sentiment: { positive: 70, negative: 25, neutral: 5 },
-                    funding: 26.1,
-                    users: 1.6,
-                    themes: {
-                        positive: [
-                            'Facilidad de uso y simplicidad',
-                            'Ahorro fiscal y deducciones',
-                            'Asesoramiento experto disponible',
-                            'Seguridad y respaldo oficial (AEAT)'
-                        ],
-                        negative: [
-                            'Problemas con casos complejos (inversiones, cripto, etc.)',
-                            'Calidad del soporte inconsistente y difícil de contactar',
-                            'Falta de transparencia en cálculos y asesores',
-                            'Sospechas sobre autenticidad de reseñas'
-                        ]
-                    }
-                },
-                taxscouts: {
-                    name: 'TaxScouts',
-                    profile: 'Percibida como una solución rápida y de precio fijo, ideal para declaraciones sencillas de particulares y autónomos. Su principal atractivo es la eficiencia y un proceso 100% online. No obstante, el modelo de asesores externos y la consiguiente "responsabilidad difusa" generan una preocupación considerable entre los usuarios.',
-                    sentiment: { positive: 62, negative: 8, neutral: 30 },
-                    funding: 8.22,
-                    users: 0.1,
-                    themes: {
-                        positive: [
-                            'Rapidez y proceso online',
-                            'Precio cerrado y competitivo',
-                            'Atención al cliente personalizada',
-                            'Asesores experimentados'
-                        ],
-                        negative: [
-                            'Responsabilidad difusa (asesores externos)',
-                            'Errores en casos complejos',
-                            'Soporte lento para urgencias',
-                            'Casos de negligencia que llevan a multas'
-                        ]
-                    }
-                },
-                declarando: {
-                    name: 'Declarando',
-                    profile: 'Ha forjado una sólida reputación en su nicho de autónomos. Ofrece un enfoque integral, promesa de ahorro fiscal significativo y un soporte experto 24/7, generando un alto grado de confianza. La reciente adquisición por parte de Visma valida su modelo de negocio y le confiere un potencial de crecimiento acelerado.',
-                    sentiment: { positive: 90, negative: 5, neutral: 5 },
-                    funding: 3.08,
-                    users: 0.2,
-                    themes: {
-                        positive: [
-                            'Fuerte especialización en autónomos',
-                            'Ahorro fiscal significativo y demostrado',
-                            'Solución integral (facturas, gastos, impuestos)',
-                            'Soporte experto y accesible 24/7',
-                            'Fiabilidad y prevención de errores'
-                        ],
-                        negative: [
-                            'Acusación aislada pero grave de "estafa"',
-                            'Menor visibilidad general que TaxDown',
-                            'Enfoque nicho, menos generalista para particulares'
-                        ]
-                    }
-                }
-            };
+        // --- State Management ---
+        const baseData = {
+            activosNC: 2909,
+            activosC: 484743,
+            pasivosNC: 3987,
+            pasivosC: 467208
+        };
 
-            let sentimentChartInstance;
-            let fundingChartInstance;
-            let usersChartInstance;
+        const scenarios = {
+            original: {
+                title: "Estado Original (Sin Corregir)",
+                desc: "Este es el balance extraído de la contabilidad actual. Muestra un Activo Corriente ficticio de 484.743,09 € (principalmente deudores comerciales) sobre los cuales la empresa ya no tiene control ni acceso. Este balance no refleja la imagen fiel.",
+                data: { aNC: 2909, aC: 484743, pNC: 3987, pC: 467208 },
+                pn: 16457,
+                entry: '<span class="text-slate-400 italic">Ningún ajuste aplicado aún. Los estados financieros no muestran la realidad económica de la empresa.</span>'
+            },
+            juzgado: {
+                title: "Escenario A: Embargo Aplicado a Deudas",
+                desc: "Se dispone de auto judicial que confirma que los 484.743 € incautados se han destinado íntegramente a cancelar parte de las deudas a corto plazo (Pasivo Corriente). El activo desaparece, pero la deuda disminuye en la misma proporción. El Patrimonio Neto se mantiene, pero la estructura cambia.",
+                data: { aNC: 2909, aC: 0, pNC: 0, pC: (467208 + 3987) - 484743 < 0 ? 0 : (467208 + 3987) - 484743 }, // Simplification: assets pay off liabilities. All LT liabilities moved to ST.
+                // Re-calculate assuming debts were paid. Total debts = 471195. Paid = 484743. (Assuming fully paid, remaining 13548 returns to company? Unlikely in real life, but mathematically: let's cap it).
+                // Let's assume the confiscated amount exact paid 467,208 of short term debt, and the rest is lost in judicial costs.
+                pn: 2909 - 3987, // aNC - remaining debt
+                entry: `
+                    <table class="w-full text-left">
+                        <tr class="border-b border-slate-200 text-slate-500"><th class="py-1">Debe</th><th class="py-1">Haber</th><th class="py-1">Cuenta</th></tr>
+                        <tr><td class="py-1 text-red-600">467.208,22</td><td></td><td>(4XX/5XX) Pasivos a corto plazo</td></tr>
+                        <tr><td class="py-1 text-red-600">17.534,87</td><td></td><td>(678) Gastos excep. (Costas judiciales)</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(430/572) Clientes / Bancos</td></tr>
+                    </table>
+                    <p class="text-xs text-slate-500 mt-2">* Además, se debe reclasificar el Pasivo No Corriente a Corto Plazo por la liquidación.</p>
+                `
+            },
+            socio: {
+                title: "Escenario B: Apropiación sin control por el Accionista",
+                desc: "El accionista movió los activos (cobros a clientes y dinero en banco) a sus cuentas personales o terceras entidades para evitar el embargo. Contablemente es un derecho de cobro frente al socio (Cta 551). Si el socio es insolvente o la deuda no es exigible, se dota un deterioro total (Pérdida), dejando a la empresa en quiebra técnica (PN negativo).",
+                data: { aNC: 2909, aC: 0, pNC: 0, pC: 467208 + 3987 }, // Assets written off. LT debt reclassified to ST.
+                pn: 2909 - (467208 + 3987), // Huge negative equity
+                entry: `
+                    <div class="mb-2 text-xs font-bold text-slate-500 uppercase">Paso 1: Reconocimiento de deuda del socio</div>
+                    <table class="w-full text-left mb-3">
+                        <tr class="border-b border-slate-200 text-slate-500"><th class="py-1">Debe</th><th class="py-1">Haber</th><th class="py-1">Cuenta</th></tr>
+                        <tr><td class="py-1 text-red-600">484.743,09</td><td></td><td>(551) Cuenta corriente con socios</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(430/572) Clientes / Bancos</td></tr>
+                    </table>
+                    <div class="mb-2 text-xs font-bold text-slate-500 uppercase">Paso 2: Deterioro por insolvencia (Baja definitiva)</div>
+                    <table class="w-full text-left">
+                        <tr><td class="py-1 text-red-600">484.743,09</td><td></td><td>(678) Gastos excepcionales (Pérdida)</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(551) Cuenta corriente con socios</td></tr>
+                    </table>
+                `
+            }
+        };
+
+        // --- Chart Initialization ---
+        let myChart = null;
+
+        function initChart() {
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            Chart.defaults.font.family = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
             
-            const mainTabs = document.querySelectorAll('#main-tabs .main-tab-btn');
-            const subTabs = document.querySelectorAll('#sub-tabs .sub-tab-btn');
-            const sections = document.querySelectorAll('.content-section');
-            const companyNameEl = document.getElementById('company-name');
-            const companyProfileEl = document.getElementById('company-profile');
-            const positiveThemesEl = document.getElementById('positive-themes');
-            const negativeThemesEl = document.getElementById('negative-themes');
-            const companyContentEl = document.getElementById('company-content');
-
-            function createThemeCard(themeText) {
-                const card = document.createElement('div');
-                card.className = 'theme-card bg-gray-50 p-3 rounded-lg border border-gray-200 cursor-default';
-                card.textContent = themeText;
-                return card;
-            }
-
-            function showMainSection(sectionId) {
-                sections.forEach(section => {
-                    section.classList.remove('active');
-                });
-                document.getElementById(sectionId).classList.add('active');
-                mainTabs.forEach(tab => {
-                    tab.classList.remove('active');
-                    if (tab.dataset.section === sectionId) {
-                        tab.classList.add('active');
-                    }
-                });
-            }
-            
-            function updateSubContent(companyKey) {
-                const data = companyData[companyKey];
-
-                companyContentEl.style.opacity = 0;
-
-                setTimeout(() => {
-                    companyNameEl.textContent = data.name;
-                    companyProfileEl.textContent = data.profile;
-
-                    positiveThemesEl.innerHTML = '';
-                    data.themes.positive.forEach(theme => {
-                        positiveThemesEl.appendChild(createThemeCard(theme));
-                    });
-
-                    negativeThemesEl.innerHTML = '';
-                    data.themes.negative.forEach(theme => {
-                        negativeThemesEl.appendChild(createThemeCard(theme));
-                    });
-
-                    updateSentimentChart(data.sentiment);
-                    
-                    companyContentEl.style.opacity = 1;
-                }, 300);
-
-                subTabs.forEach(tab => {
-                    if (tab.dataset.company === companyKey) {
-                        tab.classList.remove('sub-tab-btn');
-                        tab.classList.add('active');
-                    } else {
-                        tab.classList.remove('active');
-                        tab.classList.add('sub-tab-btn');
-                    }
-                });
-            }
-
-            function updateSentimentChart(sentimentData) {
-                const ctx = document.getElementById('sentimentChart').getContext('2d');
-                const data = {
-                    labels: ['Positivo', 'Negativo', 'Neutro'],
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Activo No Corriente', 'Activo Corriente', 'Pasivo (Toda la Deuda)', 'Patrimonio Neto'],
                     datasets: [{
-                        data: [sentimentData.positive, sentimentData.negative, sentimentData.neutral],
-                        backgroundColor: ['#10B981', '#EF4444', '#F59E0B'],
-                        borderColor: '#FFFFFF',
-                        borderWidth: 2,
-                        hoverOffset: 4
+                        label: 'Importe (€)',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#3b82f6', // blue-500
+                            '#60a5fa', // blue-400
+                            '#ef4444', // red-500
+                            '#10b981'  // emerald-500
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 4
                     }]
-                };
-
-                if (sentimentChartInstance) {
-                    sentimentChartInstance.destroy();
-                }
-
-                sentimentChartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: data,
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Distribución de Sentimiento',
-                                font: {
-                                    size: 16
-                                }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        if (context.parsed !== null) {
-                                            label += context.parsed + '%';
-                                        }
-                                        return label;
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
                                     }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('es-ES') + ' €';
                                 }
                             }
                         },
-                        cutout: '60%'
-                    }
-                });
-            }
-
-            function createOverviewCharts() {
-                const fundingCtx = document.getElementById('fundingChart').getContext('2d');
-                const usersCtx = document.getElementById('usersChart').getContext('2d');
-                
-                const labels = Object.keys(companyData).map(key => companyData[key].name);
-                const fundingValues = Object.keys(companyData).map(key => companyData[key].funding);
-                const userValues = Object.keys(companyData).map(key => companyData[key].users);
-
-                fundingChartInstance = new Chart(fundingCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Financiación Total (Millones USD)',
-                            data: fundingValues,
-                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
-                            borderColor: ['#2563EB', '#059669', '#D97706'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            title: {
-                                display: true,
-                                text: 'Financiación Total Obtenida',
-                                font: { size: 16 }
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                callback: function(val, index) {
+                                    // Wrap labels
+                                    let label = this.getLabelForValue(val);
+                                    if (label.length > 16) {
+                                        const words = label.split(' ');
+                                        let lines = [];
+                                        let currentLine = '';
+                                        words.forEach(word => {
+                                            if ((currentLine + word).length > 16) {
+                                                lines.push(currentLine.trim());
+                                                currentLine = word + ' ';
+                                            } else {
+                                                currentLine += word + ' ';
+                                            }
+                                        });
+                                        lines.push(currentLine.trim());
+                                        return lines;
+                                    }
+                                    return label;
+                                }
                             }
                         }
                     }
-                });
+                }
+            });
+        }
 
-                usersChartInstance = new Chart(usersCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Usuarios Reportados (Millones)',
-                            data: userValues,
-                            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'],
-                            borderColor: ['#2563EB', '#059669', '#D97706'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                         indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            title: {
-                                display: true,
-                                text: 'Base de Usuarios (Millones)',
-                                font: { size: 16 }
-                            }
-                        }
-                    }
-                });
+        // --- UI Updates ---
+        function setScenario(scenarioKey) {
+            // Update Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-slate-900', 'text-white');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = document.getElementById(`btn-${scenarioKey}`);
+            activeBtn.classList.remove('text-slate-600');
+            activeBtn.classList.add('active', 'bg-slate-900', 'text-white');
+
+            // Get Data
+            const s = scenarios[scenarioKey];
+
+            // Update Text & Entries
+            document.getElementById('scenario-desc').innerHTML = `
+                <h4 class="text-lg font-bold text-slate-800 mb-2">${s.title}</h4>
+                <p class="text-sm text-slate-600">${s.desc}</p>
+            `;
+            document.getElementById('journal-entries').innerHTML = s.entry;
+
+            // Update Metrics
+            const pnMetric = document.getElementById('metric-pn');
+            pnMetric.innerText = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(s.pn) + ' €';
+            if(s.pn < 0) {
+                pnMetric.classList.replace('text-slate-800', 'text-rose-600');
+            } else {
+                pnMetric.classList.replace('text-rose-600', 'text-slate-800');
             }
 
-            mainTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    showMainSection(tab.dataset.section);
-                });
-            });
+            const totalActivo = s.data.aNC + s.data.aC;
+            const totalPasivo = s.data.pNC + s.data.pC;
+            const solvencia = totalPasivo > 0 ? (totalActivo / totalPasivo).toFixed(2) : 'N/A';
+            const solMetric = document.getElementById('metric-solvencia');
+            solMetric.innerText = solvencia;
+            if(solvencia < 1) {
+                solMetric.classList.replace('text-slate-800', 'text-rose-600');
+            } else {
+                solMetric.classList.replace('text-rose-600', 'text-slate-800');
+            }
 
-            subTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    updateSubContent(tab.dataset.company);
-                });
-            });
+            // Update Chart Data
+            myChart.data.datasets[0].data = [
+                s.data.aNC, 
+                s.data.aC, 
+                totalPasivo, 
+                s.pn
+            ];
+            
+            // Update Chart Colors dynamically based on negative values
+            myChart.data.datasets[0].backgroundColor = [
+                '#334155', // slate-700 (ANC)
+                '#94a3b8', // slate-400 (AC)
+                '#ef4444', // red-500 (Deuda)
+                s.pn < 0 ? '#b91c1c' : '#10b981' // PN color depends on sign
+            ];
+            
+            myChart.update();
+        }
 
-            createOverviewCharts();
-            updateSubContent('taxdown');
-            showMainSection('overview');
+        // --- Navigation Logic ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
         });
+
+        // Initialize on load
+        window.onload = function() {
+            initChart();
+            setScenario('original');
+        };
+
     </script>
 </body>
 </html>
