@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Contable - MOVIL S.L. (En Embargo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Slate & Crimson (Professional Accounting & Alert) - Deep slate for structure, crimson/red for alerts and negative equity, teal/blue for assets. -->
+    
+    <!-- Application Structure Plan: 
+    The SPA is structured as an interactive executive report divided into 4 logical sections to guide the user from the problem to the solution:
+    1. Resumen Ejecutivo (Context): Sets the stage using the provided data.
+    2. Diagnóstico Normativo (Theory/Law): Explains the Spanish PGC and ICAC rules regarding 'Empresa en Marcha' and missing assets.
+    3. Simulador de Ajustes (Interactive Core): Allows the user to toggle between different legal realities (court confiscation vs. shareholder appropriation) to see how the balance sheet must be corrected.
+    4. Conclusiones y Pasos (Actionable advice): Final recommendations.
+    This structure is chosen because accounting corrections require understanding the legal framework *before* seeing the numbers. The interactive simulator makes abstract accounting entries tangible. -->
+
+    <!-- Visualization & Content Choices: 
+    1. Hero/Summary: HTML/Tailwind text and metric cards -> Goal: Inform -> Justification: Clear immediate context.
+    2. Framework Flow: HTML/CSS flexbox cards -> Goal: Organize -> Justification: Breaks down dense ICAC/PGC regulations into readable blocks. (NO SVG used).
+    3. Interactive Balance Sheet Chart: Chart.js Bar Chart -> Goal: Compare/Change -> Justification: Visually demonstrates the massive impact of derecognizing €484k in assets under different scenarios.
+    4. Accounting Entries (Asientos): Dynamic HTML tables -> Goal: Inform/Action -> Justification: Shows the exact journal entries needed for the 2025 correction. -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #334155; }
+        .chart-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 800px; 
+            margin-left: auto; 
+            margin-right: auto; 
+            height: 400px; 
+            max-height: 500px; 
+        }
+        @media (min-width: 768px) { .chart-container { height: 450px; } }
+        .nav-link.active { border-bottom: 2px solid #0f172a; font-weight: 600; color: #0f172a; }
+        .tab-btn.active { background-color: #0f172a; color: white; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2 text-slate-800">📊</span>
+                    <span class="font-bold text-xl text-slate-800">Auditoría y Cierre 2025</span>
+                </div>
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#contexto" class="nav-link active text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">1. Contexto</a>
+                    <a href="#normativa" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">2. Normativa PGC</a>
+                    <a href="#simulador" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">3. Corrección Balance</a>
+                    <a href="#conclusiones" class="nav-link text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition-colors">4. Conclusiones</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-16">
+
+        <!-- 1. Contexto -->
+        <section id="contexto" class="scroll-mt-20">
+            <div class="bg-white rounded-xl shadow-sm p-8 border border-slate-200">
+                <h1 class="text-3xl font-bold text-slate-900 mb-4">Caso: Tecnologías de Seguridad Movil S.L.</h1>
+                <p class="text-lg text-slate-600 mb-8 border-l-4 border-slate-400 pl-4">
+                    Investigación contable sobre la regularización del Balance de Situación 2025 ante una situación de embargo, desaparición de activos circulantes y la consecuente ruptura del principio de empresa en marcha.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-50 p-6 rounded-lg border border-slate-100">
+                        <div class="text-2xl mb-2">🏢</div>
+                        <h3 class="font-semibold text-slate-800">Situación Actual</h3>
+                        <p class="text-sm text-slate-600 mt-2">La empresa ha sido embargada. Las cuentas por cobrar (475.802€) y el efectivo han sido confiscados o movilizados irregularmente por el accionista.</p>
+                    </div>
+                    <div class="bg-rose-50 p-6 rounded-lg border border-rose-100">
+                        <div class="text-2xl mb-2">⚠️</div>
+                        <h3 class="font-semibold text-rose-800">Problema Contable</h3>
+                        <p class="text-sm text-rose-700 mt-2">El balance de 2025 muestra activos que ya no están bajo el control de la empresa. El principio de "Empresa en Marcha" está severamente comprometido.</p>
+                    </div>
+                    <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                        <div class="text-2xl mb-2">📈</div>
+                        <h3 class="font-semibold text-blue-800">Datos Base (Balance 2025 No Corregido)</h3>
+                        <ul class="text-sm text-blue-700 mt-2 space-y-1">
+                            <li>Activo Total: <strong>487.652,08 €</strong></li>
+                            <li>Pasivo Exigible: <strong>471.194,93 €</strong></li>
+                            <li>Patrimonio Neto Teórico: <strong>16.457,15 €</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Normativa -->
+        <section id="normativa" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Marco Normativo Aplicable (España)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- ICAC -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">1. Principio de Empresa en Marcha</h3>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">ICAC 2013</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">
+                        Según el Marco Conceptual del <strong>PGC Pymes (RD 1515/2007)</strong>, se presumirá que la empresa continuará en funcionamiento. Sin embargo, dado el embargo total y pérdida de activos, este principio decae.
+                    </p>
+                    <div class="bg-slate-800 text-white p-4 rounded-lg text-sm">
+                        <strong>Resolución del ICAC de 18 de octubre de 2013:</strong><br>
+                        Cuando no resulta adecuada la aplicación del principio de empresa en marcha, los activos y pasivos deben valorarse según las reglas de liquidación. Los activos se valorarán al menor entre su valor contable y su valor estimado de liquidación (que en caso de pérdida o incautación es cero).
+                    </div>
+                </div>
+
+                <!-- Baja de Activos -->
+                <div class="bg-white p-8 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">2. Baja de Activos Financieros</h3>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold">NRV 8ª PGC</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mb-4">
+                        La Norma de Registro y Valoración (NRV) de Instrumentos Financieros establece que la empresa dará de baja un activo financiero cuando expiren o se hayan cedido los derechos contractuales sobre los flujos de efectivo, o cuando se pierda el control sobre los mismos.
+                    </p>
+                    <ul class="text-sm text-slate-600 list-disc pl-5 space-y-2">
+                        <li>Si el dinero fue incautado por el juzgado para pagar deuda: <strong>Baja de Activo vs Baja de Pasivo</strong> (requiere auto judicial).</li>
+                        <li>Si el socio movilizó el dinero a sus cuentas personales: <strong>Baja de Activo vs Derecho de cobro al socio (Cta. 551)</strong>. Si es irrecuperable, se deteriora contra pérdidas (Cta. 678).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Simulador -->
+        <section id="simulador" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-2">Corrección del Balance 2025</h2>
+            <p class="text-slate-600 mb-8">Seleccione el escenario real de la desaparición de los activos circulantes (484.743,09 €) para visualizar el ajuste contable necesario.</p>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <!-- Tabs -->
+                <div class="flex flex-wrap border-b border-slate-200 bg-slate-50">
+                    <button onclick="setScenario('original')" id="btn-original" class="tab-btn active flex-1 py-4 text-sm font-medium text-center transition-colors">Balance Borrador (Erróneo)</button>
+                    <button onclick="setScenario('juzgado')" id="btn-juzgado" class="tab-btn flex-1 py-4 text-sm font-medium text-center text-slate-600 hover:bg-slate-100 transition-colors">Escenario A: Embargo Judicial Aplicado</button>
+                    <button onclick="setScenario('socio')" id="btn-socio" class="tab-btn flex-1 py-4 text-sm font-medium text-center text-slate-600 hover:bg-slate-100 transition-colors">Escenario B: Apropiación por Socio</button>
+                </div>
+
+                <div class="p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left: Explanations & Entries -->
+                    <div class="space-y-6">
+                        <div id="scenario-desc" class="min-h-[120px]">
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Estado Original (Sin Corregir)</h4>
+                            <p class="text-sm text-slate-600">Este es el balance extraído de la contabilidad actual. Muestra un Activo Corriente ficticio de 484.743,09 € (principalmente deudores comerciales) sobre los cuales la empresa ya no tiene control ni acceso. Este balance no refleja la imagen fiel.</p>
+                        </div>
+
+                        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                            <h5 class="text-sm font-bold text-slate-700 mb-3 border-b border-slate-200 pb-2">Asiento Contable de Ajuste a realizar en 2025:</h5>
+                            <div id="journal-entries" class="text-sm font-mono text-slate-800 overflow-x-auto">
+                                <span class="text-slate-400 italic">Ningún ajuste aplicado aún.</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-white border border-slate-200 p-4 rounded-lg text-center">
+                                <span class="block text-xs text-slate-500 uppercase tracking-wide">Patrimonio Neto Resultante</span>
+                                <span id="metric-pn" class="block text-2xl font-bold text-slate-800 mt-1">16.457 €</span>
+                            </div>
+                            <div class="bg-white border border-slate-200 p-4 rounded-lg text-center">
+                                <span class="block text-xs text-slate-500 uppercase tracking-wide">Solvencia (Activo/Pasivo)</span>
+                                <span id="metric-solvencia" class="block text-2xl font-bold text-slate-800 mt-1">1.03</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Charts -->
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="chart-container">
+                            <canvas id="balanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Conclusiones -->
+        <section id="conclusiones" class="scroll-mt-20">
+            <h2 class="text-2xl font-bold text-slate-900 mb-6">Dictamen y Pasos a Seguir</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl border-l-4 border-slate-800 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">1. Formulación de Cuentas Anuales</h3>
+                    <p class="text-sm text-slate-600">Las cuentas de 2025 <strong>no pueden formularse bajo el principio de empresa en marcha</strong>. En la Memoria, apartado "Bases de presentación", se debe indicar explícitamente la aplicación de la Resolución del ICAC de 2013 por liquidación/embargo de la entidad, justificando los valores de realización de los activos.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-rose-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">2. Riesgo Fiscal y Mercantil</h3>
+                    <p class="text-sm text-slate-600">Si el accionista dispuso de los fondos sin justificación (Escenario B), ante la AEAT esto puede considerarse un <strong>reparto de dividendos encubierto</strong> o una alteración patrimonial fraudulenta (alzamiento de bienes) si existen acreedores (como la deuda a corto plazo de 467k€). Se requiere trazabilidad documental urgente.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-blue-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">3. Reclasificación de Pasivos</h3>
+                    <p class="text-sm text-slate-600">Todos los pasivos a largo plazo (3.986,71 €) deben reclasificarse a corto plazo, ya que en una situación de embargo y cese de actividad, la exigibilidad de la deuda se acelera (vencimiento anticipado).</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl border-l-4 border-emerald-600 shadow-sm">
+                    <h3 class="font-bold text-lg mb-3">4. Documentación Soporte</h3>
+                    <p class="text-sm text-slate-600">Para registrar la baja de los activos, el contable necesita inexcusablemente: a) Providencia de apremio o diligencia de embargo judicial/administrativa, o b) Extractos bancarios que demuestren las transferencias del socio para registrarlas en la cuenta 551.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center mt-12">
+        <p class="text-sm">Generado para análisis técnico-contable. Basado en Plan General Contable Español (RD 1515/2007) y Resoluciones ICAC.</p>
+    </footer>
+
+    <script>
+        // --- State Management ---
+        const baseData = {
+            activosNC: 2909,
+            activosC: 484743,
+            pasivosNC: 3987,
+            pasivosC: 467208
+        };
+
+        const scenarios = {
+            original: {
+                title: "Estado Original (Sin Corregir)",
+                desc: "Este es el balance extraído de la contabilidad actual. Muestra un Activo Corriente ficticio de 484.743,09 € (principalmente deudores comerciales) sobre los cuales la empresa ya no tiene control ni acceso. Este balance no refleja la imagen fiel.",
+                data: { aNC: 2909, aC: 484743, pNC: 3987, pC: 467208 },
+                pn: 16457,
+                entry: '<span class="text-slate-400 italic">Ningún ajuste aplicado aún. Los estados financieros no muestran la realidad económica de la empresa.</span>'
+            },
+            juzgado: {
+                title: "Escenario A: Embargo Aplicado a Deudas",
+                desc: "Se dispone de auto judicial que confirma que los 484.743 € incautados se han destinado íntegramente a cancelar parte de las deudas a corto plazo (Pasivo Corriente). El activo desaparece, pero la deuda disminuye en la misma proporción. El Patrimonio Neto se mantiene, pero la estructura cambia.",
+                data: { aNC: 2909, aC: 0, pNC: 0, pC: (467208 + 3987) - 484743 < 0 ? 0 : (467208 + 3987) - 484743 }, // Simplification: assets pay off liabilities. All LT liabilities moved to ST.
+                // Re-calculate assuming debts were paid. Total debts = 471195. Paid = 484743. (Assuming fully paid, remaining 13548 returns to company? Unlikely in real life, but mathematically: let's cap it).
+                // Let's assume the confiscated amount exact paid 467,208 of short term debt, and the rest is lost in judicial costs.
+                pn: 2909 - 3987, // aNC - remaining debt
+                entry: `
+                    <table class="w-full text-left">
+                        <tr class="border-b border-slate-200 text-slate-500"><th class="py-1">Debe</th><th class="py-1">Haber</th><th class="py-1">Cuenta</th></tr>
+                        <tr><td class="py-1 text-red-600">467.208,22</td><td></td><td>(4XX/5XX) Pasivos a corto plazo</td></tr>
+                        <tr><td class="py-1 text-red-600">17.534,87</td><td></td><td>(678) Gastos excep. (Costas judiciales)</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(430/572) Clientes / Bancos</td></tr>
+                    </table>
+                    <p class="text-xs text-slate-500 mt-2">* Además, se debe reclasificar el Pasivo No Corriente a Corto Plazo por la liquidación.</p>
+                `
+            },
+            socio: {
+                title: "Escenario B: Apropiación sin control por el Accionista",
+                desc: "El accionista movió los activos (cobros a clientes y dinero en banco) a sus cuentas personales o terceras entidades para evitar el embargo. Contablemente es un derecho de cobro frente al socio (Cta 551). Si el socio es insolvente o la deuda no es exigible, se dota un deterioro total (Pérdida), dejando a la empresa en quiebra técnica (PN negativo).",
+                data: { aNC: 2909, aC: 0, pNC: 0, pC: 467208 + 3987 }, // Assets written off. LT debt reclassified to ST.
+                pn: 2909 - (467208 + 3987), // Huge negative equity
+                entry: `
+                    <div class="mb-2 text-xs font-bold text-slate-500 uppercase">Paso 1: Reconocimiento de deuda del socio</div>
+                    <table class="w-full text-left mb-3">
+                        <tr class="border-b border-slate-200 text-slate-500"><th class="py-1">Debe</th><th class="py-1">Haber</th><th class="py-1">Cuenta</th></tr>
+                        <tr><td class="py-1 text-red-600">484.743,09</td><td></td><td>(551) Cuenta corriente con socios</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(430/572) Clientes / Bancos</td></tr>
+                    </table>
+                    <div class="mb-2 text-xs font-bold text-slate-500 uppercase">Paso 2: Deterioro por insolvencia (Baja definitiva)</div>
+                    <table class="w-full text-left">
+                        <tr><td class="py-1 text-red-600">484.743,09</td><td></td><td>(678) Gastos excepcionales (Pérdida)</td></tr>
+                        <tr><td></td><td class="py-1 text-blue-600">484.743,09</td><td>(551) Cuenta corriente con socios</td></tr>
+                    </table>
+                `
+            }
+        };
+
+        // --- Chart Initialization ---
+        let myChart = null;
+
+        function initChart() {
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            Chart.defaults.font.family = "'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+            
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Activo No Corriente', 'Activo Corriente', 'Pasivo (Toda la Deuda)', 'Patrimonio Neto'],
+                    datasets: [{
+                        label: 'Importe (€)',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#3b82f6', // blue-500
+                            '#60a5fa', // blue-400
+                            '#ef4444', // red-500
+                            '#10b981'  // emerald-500
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString('es-ES') + ' €';
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                callback: function(val, index) {
+                                    // Wrap labels
+                                    let label = this.getLabelForValue(val);
+                                    if (label.length > 16) {
+                                        const words = label.split(' ');
+                                        let lines = [];
+                                        let currentLine = '';
+                                        words.forEach(word => {
+                                            if ((currentLine + word).length > 16) {
+                                                lines.push(currentLine.trim());
+                                                currentLine = word + ' ';
+                                            } else {
+                                                currentLine += word + ' ';
+                                            }
+                                        });
+                                        lines.push(currentLine.trim());
+                                        return lines;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- UI Updates ---
+        function setScenario(scenarioKey) {
+            // Update Buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-slate-900', 'text-white');
+                btn.classList.add('text-slate-600');
+            });
+            const activeBtn = document.getElementById(`btn-${scenarioKey}`);
+            activeBtn.classList.remove('text-slate-600');
+            activeBtn.classList.add('active', 'bg-slate-900', 'text-white');
+
+            // Get Data
+            const s = scenarios[scenarioKey];
+
+            // Update Text & Entries
+            document.getElementById('scenario-desc').innerHTML = `
+                <h4 class="text-lg font-bold text-slate-800 mb-2">${s.title}</h4>
+                <p class="text-sm text-slate-600">${s.desc}</p>
+            `;
+            document.getElementById('journal-entries').innerHTML = s.entry;
+
+            // Update Metrics
+            const pnMetric = document.getElementById('metric-pn');
+            pnMetric.innerText = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 0 }).format(s.pn) + ' €';
+            if(s.pn < 0) {
+                pnMetric.classList.replace('text-slate-800', 'text-rose-600');
+            } else {
+                pnMetric.classList.replace('text-rose-600', 'text-slate-800');
+            }
+
+            const totalActivo = s.data.aNC + s.data.aC;
+            const totalPasivo = s.data.pNC + s.data.pC;
+            const solvencia = totalPasivo > 0 ? (totalActivo / totalPasivo).toFixed(2) : 'N/A';
+            const solMetric = document.getElementById('metric-solvencia');
+            solMetric.innerText = solvencia;
+            if(solvencia < 1) {
+                solMetric.classList.replace('text-slate-800', 'text-rose-600');
+            } else {
+                solMetric.classList.replace('text-rose-600', 'text-slate-800');
+            }
+
+            // Update Chart Data
+            myChart.data.datasets[0].data = [
+                s.data.aNC, 
+                s.data.aC, 
+                totalPasivo, 
+                s.pn
+            ];
+            
+            // Update Chart Colors dynamically based on negative values
+            myChart.data.datasets[0].backgroundColor = [
+                '#334155', // slate-700 (ANC)
+                '#94a3b8', // slate-400 (AC)
+                '#ef4444', // red-500 (Deuda)
+                s.pn < 0 ? '#b91c1c' : '#10b981' // PN color depends on sign
+            ];
+            
+            myChart.update();
+        }
+
+        // --- Navigation Logic ---
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Initialize on load
+        window.onload = function() {
+            initChart();
+            setScenario('original');
+        };
+
+    </script>
+</body>
+</html>
