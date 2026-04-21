@@ -106,16 +106,16 @@ const CategoryGrid = () => {
   };
 
   return (
-    <section className="px-8 py-24 md:px-24 bg-white/50 relative overflow-hidden">
+    <section className="px-6 md:px-12 lg:px-24 py-16 md:py-24 bg-white/50 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-50 via-white to-white -z-10"></div>
       
-      <div className="max-w-7xl mx-auto space-y-16">
+      <div className="max-w-7xl mx-auto space-y-12 md:space-y-16">
         <motion.h2 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="text-4xl font-bold text-center text-gray-900 tracking-tight"
+          className="text-3xl md:text-4xl font-bold text-center text-gray-900 tracking-tight leading-tight"
         >
           ¿Qué vas a encontrar en <span className="text-brand-red">Gestor</span><span className="italic tracking-tighter">IA</span>?
         </motion.h2>
@@ -125,7 +125,7 @@ const CategoryGrid = () => {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
         >
           {categories.map((cat, index) => (
             <motion.div variants={itemVariants} key={index}>

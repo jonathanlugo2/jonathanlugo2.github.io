@@ -103,7 +103,7 @@ const ServiceGrid = () => {
   ];
 
   return (
-    <section className="px-8 py-20 md:px-24 bg-white">
+    <section className="px-6 md:px-12 lg:px-24 py-16 md:py-24 bg-white">
       <div className="max-w-7xl mx-auto space-y-12">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -112,8 +112,8 @@ const ServiceGrid = () => {
           transition={{ duration: 0.6 }}
           className="text-center space-y-4"
         >
-          <h2 className="text-4xl font-bold text-gray-900">Descubre nuestros servicios destacados</h2>
-          <p className="text-gray-500 max-w-2xl mx-auto font-medium">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">Descubre nuestros servicios destacados</h2>
+          <p className="text-gray-500 max-w-2xl mx-auto font-medium text-sm md:text-base">
             Más de 10 años acompañando a empresas y emprendedores a alcanzar sus metas con seguridad jurídica y financiera.
           </p>
         </motion.div>
@@ -124,9 +124,9 @@ const ServiceGrid = () => {
           viewport={{ once: true }}
           className="flex justify-center mb-8"
         >
-          <div className="inline-flex bg-gray-100 p-1 rounded-2xl">
-            <button className="px-8 py-2 bg-white rounded-xl shadow-sm font-bold text-brand-red transition-all">Destacados</button>
-            <button className="px-8 py-2 text-gray-500 font-bold hover:text-gray-700 transition-all">Novedades</button>
+          <div className="inline-flex bg-gray-100 p-1 rounded-2xl overflow-x-auto max-w-full">
+            <button className="whitespace-nowrap px-6 md:px-8 py-2 bg-white rounded-xl shadow-sm font-bold text-brand-red transition-all text-sm md:text-base">Destacados</button>
+            <button className="whitespace-nowrap px-6 md:px-8 py-2 text-gray-500 font-bold hover:text-gray-700 transition-all text-sm md:text-base">Novedades</button>
           </div>
         </motion.div>
 
