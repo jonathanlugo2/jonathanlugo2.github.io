@@ -5,9 +5,9 @@ import CategoryGrid from './components/CategoryGrid'
 
 function App() {
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-red-100 selection:text-brand-red">
+    <div className="min-h-screen bg-white font-sans selection:bg-red-100 selection:text-brand-red overflow-x-hidden w-full flex flex-col">
       <Navbar />
-      <main>
+      <main className="flex-1 w-full">
         <Hero />
         <ServiceGrid />
         <CategoryGrid />
